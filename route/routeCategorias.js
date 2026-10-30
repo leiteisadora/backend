@@ -1,153 +1,82 @@
 const express = require('express');
+const { Categoria } = require("../models");
 
 const router = express.Router();
 
-const mysql = require("../mysql").pool;
+const formatCategoria = (categoria) => ({
+    ...categoria,
+    ativo: categoria.ativo === null ? null : Number(categoria.ativo)
+});
 
-// LISTAR CATEGORIAS
+const handleDatabaseError = (res, error) => res.status(500).send({ error });
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
+    try {
+        const resultado = await Categoria.findAll({ raw: true });
+        res.status(200).send({ categoria: resultado.map(formatCategoria) });
+    } catch (error) {
+        handleDatabaseError(res, error);
+    }
+});
 
-    mysql.getConnection((error, conn) => {
-
-        if (error) return res.status(500).send({ error });
-
-        conn.query("SELECT * FROM categorias", (error, resultado) => {
-
-            conn.release();
-
-            if (error) return res.status(500).send({ error });
-
-            res.status(200).send({ categoria: resultado });
-
+router.get('/:id', async (req, res) => {
+    try {
+        const resultado = await Categoria.findAll({
+            where: { id_categoria: req.params.id },
+            raw: true
         });
-
-    });
-
+        res.status(200).send({ categoria: resultado.map(formatCategoria) });
+    } catch (error) {
+        handleDatabaseError(res, error);
+    }
 });
 
-// LISTA APENAS UMA CATEGORIA
+router.post('/', async (req, res) => {
+    const dados = {
+        nome: req.body.nome,
+        descricao: req.body.descricao
+    };
 
-router.get('/:id', (req, res, next) => {
-
-    mysql.getConnection((error, conn) => {
-
-        if (error) return res.status(500).send({ error: error });
-
-        conn.query(
-            "SELECT * FROM categorias WHERE id_categoria = ?",
-            [req.params.id],
-            (error, resultado) => {
-
-                conn.release();
-
-                if (error) return res.status(500).send({ error: error });
-
-                res.status(200).send({ categoria: resultado });
-
-            }
-        );
-
-    });
-
+    try {
+        const categoria = await Categoria.create(dados);
+        res.status(201).send({
+            mensagem: "Categoria criada com sucesso!",
+            id_categoria: categoria.id_categoria
+        });
+    } catch (error) {
+        handleDatabaseError(res, error);
+    }
 });
 
-// CADASTRAR CATEGORIA
+router.patch('/:id', async (req, res) => {
+    const dados = {
+        nome: req.body.nome === undefined ? null : req.body.nome,
+        descricao: req.body.descricao === undefined ? null : req.body.descricao
+    };
 
-router.post('/', (req, res, next) => {
-
-    mysql.getConnection((error, conn) => {
-
-        if (error) return res.status(500).send({ error: error });
-
-        conn.query(
-            "INSERT INTO categorias (nome, descricao) VALUES (?, ?)",
-            [
-                req.body.nome,
-                req.body.descricao
-            ],
-            (error, resultado) => {
-
-                console.log(error);
-
-                conn.release();
-
-                if (error) return res.status(500).send({ error: error });
-
-                res.status(201).send({
-                    mensagem: "Categoria criada com sucesso!",
-                    id_categoria: resultado.insertId
-                });
-
-            }
-        );
-
-    });
-
+    try {
+        await Categoria.update(dados, {
+            where: { id_categoria: req.params.id }
+        });
+        res.status(202).send({
+            mensagem: "Categoria atualizada com sucesso!"
+        });
+    } catch (error) {
+        handleDatabaseError(res, error);
+    }
 });
 
-// ATUALIZAR CATEGORIA
-
-router.patch('/:id', (req, res, next) => {
-
-    mysql.getConnection((error, conn) => {
-
-        if (error) return res.status(500).send({ error: error });
-
-        conn.query(
-            "UPDATE categorias SET nome = ?, descricao = ? WHERE id_categoria = ?",
-            [
-                req.body.nome,
-                req.body.descricao,
-                req.params.id
-            ],
-            (error, resultado) => {
-
-                conn.release();
-
-                if (error) return res.status(500).send({ error: error });
-
-                res.status(202).send({
-                    mensagem: "Categoria atualizada com sucesso!"
-                });
-
-            }
-
-        );
-
-    });
-
-});
-
-// DELETAR CATEGORIA
-
-router.delete('/:id', (req, res, next) => {
-
-    mysql.getConnection((error, conn) => {
-
-        if (error) return res.status(500).send({ error: error });
-
-        conn.query(
-            "DELETE FROM categorias WHERE id_categoria = ?",
-            [req.params.id],
-            (error, resultado) => {
-
-                conn.release();
-
-                if (error) return res.status(500).send({ error: error });
-
-                res.status(202).send({
-                    mensagem: "Categoria removida com sucesso!"
-                });
-
-            }
-
-        );
-
-    });
-
+router.delete('/:id', async (req, res) => {
+    try {
+        await Categoria.destroy({
+            where: { id_categoria: req.params.id }
+        });
+        res.status(202).send({
+            mensagem: "Categoria removida com sucesso!"
+        });
+    } catch (error) {
+        handleDatabaseError(res, error);
+    }
 });
 
 module.exports = router;
-
-

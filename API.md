@@ -1,67 +1,97 @@
 # API da loja
 
-## Objetivo
+## Visão geral
 
-Esta API fornece operações HTTP para gerenciar os dados de uma loja e do seu
-estoque. Ela permite consultar, cadastrar, atualizar e remover registros de
-usuários, clientes, produtos, pedidos e outros recursos relacionados. Os dados
-são armazenados em MySQL.
+API HTTP em Node.js e Express para gerenciar usuários e dados de uma loja e do
+seu estoque. As respostas são JSON. O servidor também aceita corpos
+`application/x-www-form-urlencoded`.
 
-## Tecnologias e configuração
+O acesso ao banco está em migração gradual:
 
-- Node.js com Express.
-- MySQL, acessado por um pool de conexões.
-- Requisições e respostas em JSON. O servidor também aceita formulários
-  `application/x-www-form-urlencoded`.
-- CORS habilitado para qualquer origem.
-- A porta padrão é `5000`; pode ser alterada pela variável `PORT`.
-- A conexão com o banco usa as variáveis `DB_HOST`, `DB_PORT`, `DB_USER`,
-  `DB_PASSWORD` e `DB_NAME`. `DB_PORT` assume `3306` quando não informado.
+- `/categorias` usa o modelo Sequelize `Categoria`.
+- As demais rotas ainda usam diretamente o pool de conexões exportado por
+  `mysql.js`.
+- Os modelos Sequelize existem para mapear o esquema, mas isso não significa que
+  todas as rotas já os utilizam.
+- A aplicação não executa `sequelize.sync()` na inicialização; as tabelas
+  existentes não são criadas ou alteradas automaticamente.
 
-## Endpoints
+## Executar e configurar
 
-As rotas abaixo são relativas à origem e à porta onde o servidor está
-executando. Por exemplo: `http://localhost:5000/produtos`.
+Execute `npm start` para iniciar o servidor com Nodemon. A porta padrão é
+`5000`; configure `PORT` para usar outra porta.
 
-| Recurso | Prefixo | Funcionalidades |
+A conexão com o MySQL usa as variáveis definidas no `.env`:
+
+| Variável | Finalidade | Padrão |
 |---|---|---|
-| Usuários | `/usuario` | Listar usuários, consultar por ID, cadastrar, atualizar, remover e autenticar pelo endpoint `/login`. |
-| Clientes | `/clientes` | Listar, consultar por ID, cadastrar, atualizar e remover clientes. |
-| Categorias | `/categorias` | Listar, consultar por ID, cadastrar, atualizar e remover categorias. |
-| Fornecedores | `/fornecedores` | Listar, consultar por ID, cadastrar, atualizar e remover fornecedores. |
-| Funcionários | `/funcionarios` | Listar, consultar por ID, cadastrar, atualizar e remover funcionários. |
-| Produtos | `/produtos` | Listar, consultar por ID, cadastrar, atualizar e remover produtos. |
-| Entradas | `/entradas` | Registrar e gerenciar entradas de produtos, incluindo fornecedor, quantidade, valor, data e observação. |
-| Estoque | `/estoque` | Consultar e gerenciar registros de estoque, quantidade, limites mínimo e máximo e localização. |
-| Histórico de preços | `/historico_precos` | Consultar e gerenciar preços e suas vigências por produto. |
-| Logs | `/logs` | Consultar e gerenciar registros de log da aplicação. |
-| Movimentações | `/movimentacoes` | Consultar e gerenciar movimentações de produtos, com tipo, quantidade, data e observação. |
-| Pedidos | `/pedidos` | Consultar e gerenciar pedidos, com status, data e cliente associado. |
-| Itens de pedido | `/pedido_itens` | Consultar e gerenciar produtos, quantidades e valores associados a pedidos. |
-| Saídas | `/saidas` | Consultar e gerenciar saídas de produtos, com funcionário, quantidade, valor, data e destino. |
+| `DB_HOST` | Host MySQL | Sem padrão |
+| `DB_PORT` | Porta MySQL | `3306` |
+| `DB_USER` | Usuário MySQL | Sem padrão |
+| `DB_PASSWORD` | Senha MySQL | Sem padrão |
+| `DB_NAME` | Banco de dados | Sem padrão |
 
-### Operações padrão de recursos
+Não publique valores de credenciais. O CORS está habilitado para qualquer
+origem. Morgan registra as requisições HTTP.
 
-Nos recursos com gerenciamento completo, os métodos e caminhos seguem este
-padrão:
+Exemplo de origem local: `http://localhost:5000`.
 
-| Método | Caminho | Operação |
+## Rotas
+
+Todas as rotas de coleção aceitam `GET`, `POST`, `PATCH /:id` e `DELETE /:id`,
+salvo indicação em contrário. O `GET /:id` responde com uma lista que contém
+zero ou um registro; um ID inexistente não é convertido em `404`.
+
+| Recurso e prefixo | Campo do ID | Chave do envelope de leitura | Campos recebidos em `POST` e `PATCH` |
+|---|---|---|---|
+| Categorias — `/categorias` | `id_categoria` | `categoria` | `nome`, `descricao` |
+| Clientes — `/clientes` | `id_cliente` | `cliente` | `nome`, `email`, `contato` |
+| Fornecedores — `/fornecedores` | `id_fornecedor` | `fornecedor` | `nome`, `empresa`, `email`, `telefone`, `cidade`, `estado` |
+| Funcionários — `/funcionarios` | `id_funcionario` | `funcionario` | `nome`, `cargo`, `salario`, `telefone`, `email` |
+| Produtos — `/produtos` | `id_produto` | `produto` | `nome`, `descricao`, `preco`, `imagem_produto` |
+| Entradas — `/entradas` | `id_entrada` | `entrada` | `id_produto`, `id_fornecedor`, `quantidade`, `valor_unitario`, `data_entrada`, `observacao` |
+| Estoque — `/estoque` | `id_estoque` | `estoque` | `id_produto`, `quantidade`, `estoque_minimo`, `estoque_maximo`, `localizacao` |
+| Histórico de preços — `/historico_precos` | `id_historico` | `historico_preco` | `id_produto`, `preco`, `vigencia` |
+| Logs — `/logs` | `id_log` | `log` | `usuario`, `tabela_afetada`, `acao`, `registro`, `data_hora` |
+| Movimentações — `/movimentacoes` | `id_movimentacao` | `movimentacao` | `id_produto`, `tipo`, `quantidade`, `data_movimentacao`, `observacao` |
+| Pedidos — `/pedidos` | `id_pedido` | `pedido` | `status`, `data_pedido`, `id_cliente` |
+| Itens de pedido — `/pedido_itens` | `id_item` | `pedido_item` | `id_pedido`, `id_produto`, `quantidade`, `valor_unitario`, `subtotal` |
+| Saídas — `/saidas` | `id_saida` | `saida` | `id_produto`, `id_funcionario`, `quantidade`, `valor_unitario`, `data_saida`, `destino` |
+
+Cada prefixo da tabela aceita:
+
+| Método | Caminho | Comportamento |
 |---|---|---|
-| `GET` | `/<recurso>` | Lista os registros do recurso. |
-| `GET` | `/<recurso>/:id` | Consulta um registro pelo ID. |
-| `POST` | `/<recurso>` | Cadastra um registro usando os campos esperados no corpo JSON. |
-| `PATCH` | `/<recurso>/:id` | Atualiza os campos do registro indicado. |
-| `DELETE` | `/<recurso>/:id` | Remove o registro indicado. |
+| `GET` | `/<prefixo>` | Lista registros no envelope indicado. |
+| `GET` | `/<prefixo>/:id` | Lista o registro correspondente ao ID no mesmo envelope; lista vazia quando não encontrado. |
+| `POST` | `/<prefixo>` | Insere os campos indicados e responde `201` com mensagem e ID gerado. |
+| `PATCH` | `/<prefixo>/:id` | Atualiza os campos indicados e responde `202` com mensagem. Os handlers definem todos esses campos na atualização; não trate `PATCH` como atualização parcial. |
+| `DELETE` | `/<prefixo>/:id` | Remove pelo ID e responde `202` com mensagem. |
 
-O nome do campo de ID varia por recurso (por exemplo, `id_produto`,
-`id_cliente` e `id_pedido`). Cada cadastro e atualização recebe no corpo os
-campos usados por aquele recurso; os nomes podem ser conferidos na tabela e no
-código correspondente em `route/`.
+Os campos das requisições devem ser enviados em JSON ou
+`application/x-www-form-urlencoded`. As rotas não têm validação de payload
+uniforme; o banco pode rejeitar valores ausentes, inválidos, duplicados ou
+incompatíveis com chaves estrangeiras. Na rota de categorias, campos omitidos
+em `PATCH` são enviados ao Sequelize como `null`.
+
+### Usuários — `/usuario`
+
+Além do login, a rota oferece `GET /usuario`, `GET /usuario/:id`,
+`POST /usuario`, `PATCH /usuario/:id` e `DELETE /usuario/:id`.
+
+- O cadastro lê `nome`, `email`, `senha`, `contato` e `genero`.
+- A atualização lê `nome`, `email` e `senha`.
+- As consultas `GET` usam `SELECT *`; portanto, atualmente incluem o campo
+  `senha` na resposta. Evite expor esses endpoints até que a resposta seja
+  corrigida para omitir credenciais.
+- O cadastro e a atualização gravam o valor de `senha` recebido sem aplicar
+  hash. O login aceita bcrypt e também a comparação de valores legados em texto
+  puro. O formato dos dados existentes não é inferido pela API.
 
 ### Login
 
-`POST /usuario/login` autentica um usuário ativo pelo endereço de e-mail e
-senha. Envie:
+`POST /usuario/login` autentica pelo e-mail de um usuário ativo (`ativo = 1`).
+Envie:
 
 ```json
 {
@@ -70,30 +100,75 @@ senha. Envie:
 }
 ```
 
-No sucesso, a resposta contém uma mensagem e os dados do usuário, sem a senha.
-Credenciais inválidas retornam `401`; campos ausentes ou inválidos retornam
-`400`.
+- Sucesso: `200`, com `mensagem` e `usuario` sem o campo `senha`.
+- Campos ausentes, vazios ou de tipo incorreto: `400`.
+- E-mail ou senha inválidos: `401`.
+- Falha de conexão, consulta ou validação bcrypt: `500`.
 
-O endpoint valida senhas armazenadas em bcrypt e também é compatível com
-senhas legadas em texto puro. **O login não cria sessão nem emite token**; a
-API não implementa autenticação para proteger as demais rotas.
+O endpoint remove espaços no início e no fim do e-mail. **Não cria sessão nem
+emite token.** A API não tem middleware de autenticação: as demais rotas não
+exigem login.
 
-## Respostas e erros
+## Formatos de resposta
 
-- `200`: consulta ou login bem-sucedido.
-- `201`: registro criado.
-- `202`: atualização ou remoção aceita.
-- `400`: dados obrigatórios do login ausentes ou inválidos.
-- `401`: credenciais de login inválidas.
-- `404`: rota não encontrada.
-- `500`: erro interno, incluindo falhas de conexão ou consulta ao banco.
-
-As respostas de erro do tratamento geral usam o formato:
+Leituras usam o envelope indicado na tabela, por exemplo:
 
 ```json
 {
-  "erro": {
-    "mensagem": "Não encontrado!"
-  }
+  "categoria": [
+    {
+      "id_categoria": 1,
+      "nome": "Exemplo",
+      "descricao": null,
+      "ativo": 1
+    }
+  ]
 }
 ```
+
+Respostas de criação usam `201` e seguem o formato:
+
+```json
+{
+  "mensagem": "Categoria criada com sucesso!",
+  "id_categoria": 1
+}
+```
+
+Atualizações e remoções respondem `202` com uma mensagem. Os nomes exatos das
+mensagens variam por recurso.
+
+## Status e erros
+
+- `200`: leitura ou login bem-sucedido.
+- `201`: registro criado.
+- `202`: atualização ou remoção aceita.
+- `400`: campos obrigatórios do login ausentes ou inválidos.
+- `401`: credenciais de login inválidas.
+- `404`: rota não encontrada; resposta do handler global:
+
+  ```json
+  {
+    "erro": {
+      "mensagem": "Não encontrado!"
+    }
+  }
+  ```
+
+- `500`: falha de conexão, consulta ou outra falha interna. Erros de banco
+  tratados diretamente pelas rotas normalmente usam `{ "error": ... }`; o
+  formato não é uniforme entre o handler global e os handlers das rotas.
+
+## Frontend
+
+O painel estático fica em `frontend/`. Sirva essa pasta com um servidor de
+arquivos estáticos e abra `index.html`; informe o endereço base do backend no
+botão de configurações. O valor é salvo no armazenamento local do navegador.
+O painel consome os 13 recursos CRUD descritos acima, com busca, criação,
+edição e remoção. Ele não inclui a rota de usuários: os `GET /usuario`
+retornam o campo `senha`, e a API não oferece autenticação ou autorização.
+
+O CORS permite qualquer origem, mas isso não protege os dados nem restringe
+quem pode chamar a API. Não disponibilize o painel ou o backend publicamente
+como ferramenta administrativa até que o backend implemente autenticação,
+autorização e respostas seguras para dados de usuários.
