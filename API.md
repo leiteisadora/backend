@@ -359,12 +359,18 @@ ainda não há autorização por perfil ou por recurso. Em produção, use HTTPS
 configure explicitamente `FRONTEND_ORIGIN` e proteja as credenciais e o segredo
 JWT.
 
-## Endereço público da API
+## Endereços públicos
 
-A API está hospedada no Render em
-`https://backend-oz6f.onrender.com`. O painel frontend ainda precisa ser
-publicado como um serviço estático para obter seu próprio endereço público.
-Localmente, o endereço padrão é `http://localhost:5000`.
+A API está hospedada no Render em `https://backend-oz6f.onrender.com` e o painel
+estático está em `https://gestao-loja-78j8.onrender.com`. O frontend usa a URL
+pública da API por padrão; localmente, o endereço padrão é
+`http://localhost:5000`.
+
+No serviço da API, configure `FRONTEND_ORIGIN` com o endereço exato do frontend
+publicado, sem barra final nem caminho:
+`https://gestao-loja-78j8.onrender.com`. Depois de alterar essa variável, salve
+e reimplante o serviço da API para que o CORS permita as requisições com cookies
+do painel.
 
 A configuração inicial do serviço de backend para Render está em
 `render.yaml`.
@@ -380,8 +386,9 @@ Para publicar pela sua conta Render:
    `JWT_SECRET` é gerado pelo Render. Em `FRONTEND_ORIGIN`, informe a origem
    HTTPS exata do frontend publicado, sem caminho de rota.
 4. Após um deploy bem-sucedido do frontend, atualize `FRONTEND_ORIGIN` no
-   serviço da API com a origem HTTPS exata da página estática publicada.
-   Configure o frontend para usar `https://backend-oz6f.onrender.com` como API.
+   serviço da API com a origem HTTPS exata da página estática publicada e
+   reimplante a API. Configure o frontend para usar
+   `https://backend-oz6f.onrender.com` como API.
 
 Não use o host do MySQL como endereço da API: são serviços diferentes. Nunca
 coloque valores secretos no repositório ou neste documento.
