@@ -6,7 +6,9 @@ const mysql = require("../mysql").pool;
 router.get('/', (req, res) => {
     mysql.getConnection((error, conn) => {
         if (error) return res.status(500).send({ error });
-        conn.query("SELECT * FROM pedidos", (error, resultado) => {
+        conn.query(
+            "SELECT p.*, c.nome AS cliente_nome FROM pedidos p LEFT JOIN clientes c ON c.id_cliente = p.id_cliente",
+            (error, resultado) => {
             conn.release();
             if (error) return res.status(500).send({ error });
             res.status(200).send({ pedido: resultado });
@@ -18,7 +20,10 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
     mysql.getConnection((error, conn) => {
         if (error) return res.status(500).send({ error });
-        conn.query("SELECT * FROM pedidos WHERE id_pedido = ?", [req.params.id], (error, resultado) => {
+        conn.query(
+            "SELECT p.*, c.nome AS cliente_nome FROM pedidos p LEFT JOIN clientes c ON c.id_cliente = p.id_cliente WHERE p.id_pedido = ?",
+            [req.params.id],
+            (error, resultado) => {
             conn.release();
             if (error) return res.status(500).send({ error });
             res.status(200).send({ pedido: resultado });

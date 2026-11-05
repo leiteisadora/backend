@@ -44,8 +44,8 @@ O acesso ao banco está em migração gradual:
 
 ### Instalação e inicialização
 
-Requisitos: Node.js compatível com a versão indicada no projeto e uma instância
-MySQL acessível. Na raiz do projeto:
+Requisitos: Node.js compatível com as versões das dependências declaradas em
+`package.json` e uma instância MySQL acessível. Na raiz do projeto:
 
 ```sh
 npm install
@@ -361,9 +361,13 @@ JWT.
 
 ## Endereço público da API
 
-O repositório ainda não tem uma URL pública implantada. O endereço local padrão
-é `http://localhost:5000`; ele só pode ser acessado na máquina onde o servidor
-está executando. A configuração inicial para Render está em `render.yaml`.
+A API está hospedada no Render em
+`https://backend-oz6f.onrender.com`. O painel frontend ainda precisa ser
+publicado como um serviço estático para obter seu próprio endereço público.
+Localmente, o endereço padrão é `http://localhost:5000`.
+
+A configuração inicial do serviço de backend para Render está em
+`render.yaml`.
 
 Para publicar pela sua conta Render:
 
@@ -375,11 +379,9 @@ Para publicar pela sua conta Render:
    `DB_PASSWORD` e `DB_NAME`) para um banco MySQL acessível pelo Render.
    `JWT_SECRET` é gerado pelo Render. Em `FRONTEND_ORIGIN`, informe a origem
    HTTPS exata do frontend publicado, sem caminho de rota.
-4. Após um deploy bem-sucedido, copie a URL `https://...onrender.com` exibida
-   pelo Render e atualize esta seção. O nome configurado é `loja-api`, mas a
-   URL só fica reservada após a criação do serviço e pode depender da
-   disponibilidade do nome.
+4. Após um deploy bem-sucedido do frontend, atualize `FRONTEND_ORIGIN` no
+   serviço da API com a origem HTTPS exata da página estática publicada.
+   Configure o frontend para usar `https://backend-oz6f.onrender.com` como API.
 
-Até a implantação estar concluída, não há endereço público funcional a
-informar. Não use o host do MySQL como endereço da API: são serviços
-diferentes. Nunca coloque valores secretos no repositório ou neste documento.
+Não use o host do MySQL como endereço da API: são serviços diferentes. Nunca
+coloque valores secretos no repositório ou neste documento.

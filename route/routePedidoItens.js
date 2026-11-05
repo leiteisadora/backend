@@ -6,7 +6,9 @@ const mysql = require("../mysql").pool;
 router.get('/', (req, res) => {
     mysql.getConnection((error, conn) => {
         if (error) return res.status(500).send({ error });
-        conn.query("SELECT * FROM pedido_itens", (error, resultado) => {
+        conn.query(
+            "SELECT i.*, CONCAT('Pedido #', p.id_pedido) AS pedido_referencia, pr.nome AS produto_nome FROM pedido_itens i LEFT JOIN pedidos p ON p.id_pedido = i.id_pedido LEFT JOIN produtos pr ON pr.id_produto = i.id_produto",
+            (error, resultado) => {
             conn.release();
             if (error) return res.status(500).send({ error });
             res.status(200).send({ pedido_item: resultado });
@@ -18,7 +20,10 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
     mysql.getConnection((error, conn) => {
         if (error) return res.status(500).send({ error });
-        conn.query("SELECT * FROM pedido_itens WHERE id_item = ?", [req.params.id], (error, resultado) => {
+        conn.query(
+            "SELECT i.*, CONCAT('Pedido #', p.id_pedido) AS pedido_referencia, pr.nome AS produto_nome FROM pedido_itens i LEFT JOIN pedidos p ON p.id_pedido = i.id_pedido LEFT JOIN produtos pr ON pr.id_produto = i.id_produto WHERE i.id_item = ?",
+            [req.params.id],
+            (error, resultado) => {
             conn.release();
             if (error) return res.status(500).send({ error });
             res.status(200).send({ pedido_item: resultado });

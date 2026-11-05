@@ -6,7 +6,9 @@ const mysql = require("../mysql").pool;
 router.get('/', (req, res) => {
     mysql.getConnection((error, conn) => {
         if (error) return res.status(500).send({ error });
-        conn.query("SELECT * FROM estoque", (error, resultado) => {
+        conn.query(
+            "SELECT e.*, p.nome AS produto_nome FROM estoque e LEFT JOIN produtos p ON p.id_produto = e.id_produto",
+            (error, resultado) => {
             conn.release();
             if (error) return res.status(500).send({ error });
             res.status(200).send({ estoque: resultado });
@@ -18,7 +20,10 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
     mysql.getConnection((error, conn) => {
         if (error) return res.status(500).send({ error });
-        conn.query("SELECT * FROM estoque WHERE id_estoque = ?", [req.params.id], (error, resultado) => {
+        conn.query(
+            "SELECT e.*, p.nome AS produto_nome FROM estoque e LEFT JOIN produtos p ON p.id_produto = e.id_produto WHERE e.id_estoque = ?",
+            [req.params.id],
+            (error, resultado) => {
             conn.release();
             if (error) return res.status(500).send({ error });
             res.status(200).send({ estoque: resultado });

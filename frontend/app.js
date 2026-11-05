@@ -63,7 +63,11 @@ const resources = [
     group: "Operações",
     icon: "arrow-down",
     description: "Registre produtos recebidos no estoque.",
-    fields: [["id_produto", "ID do produto", "number"], ["id_fornecedor", "ID do fornecedor", "number"], ["quantidade", "Quantidade", "number"], ["valor_unitario", "Valor unitário", "number"], ["data_entrada", "Data da entrada", "date"], ["observacao", "Observação", "textarea"]]
+    fields: [["id_produto", "Produto", "number"], ["id_fornecedor", "Fornecedor", "number"], ["quantidade", "Quantidade", "number"], ["valor_unitario", "Valor unitário", "number"], ["data_entrada", "Data da entrada", "date"], ["observacao", "Observação", "textarea"]],
+    references: {
+      id_produto: { path: "produtos", envelope: "produto", id: "id_produto", name: "nome", joined: "produto_nome" },
+      id_fornecedor: { path: "fornecedores", envelope: "fornecedor", id: "id_fornecedor", name: "nome", joined: "fornecedor_nome" }
+    }
   },
   {
     path: "estoque",
@@ -74,7 +78,10 @@ const resources = [
     group: "Operações",
     icon: "layers",
     description: "Acompanhe quantidades e limites de estoque.",
-    fields: [["id_produto", "ID do produto", "number"], ["quantidade", "Quantidade", "number"], ["estoque_minimo", "Estoque mínimo", "number"], ["estoque_maximo", "Estoque máximo", "number"], ["localizacao", "Localização", "text"]]
+    fields: [["id_produto", "Produto", "number"], ["quantidade", "Quantidade", "number"], ["estoque_minimo", "Estoque mínimo", "number"], ["estoque_maximo", "Estoque máximo", "number"], ["localizacao", "Localização", "text"]],
+    references: {
+      id_produto: { path: "produtos", envelope: "produto", id: "id_produto", name: "nome", joined: "produto_nome" }
+    }
   },
   {
     path: "historico_precos",
@@ -85,7 +92,10 @@ const resources = [
     group: "Operações",
     icon: "chart",
     description: "Consulte as alterações de preço dos produtos.",
-    fields: [["id_produto", "ID do produto", "number"], ["preco", "Preço", "number"], ["vigencia", "Vigência", "date"]]
+    fields: [["id_produto", "Produto", "number"], ["preco", "Preço", "number"], ["vigencia", "Vigência", "date"]],
+    references: {
+      id_produto: { path: "produtos", envelope: "produto", id: "id_produto", name: "nome", joined: "produto_nome" }
+    }
   },
   {
     path: "movimentacoes",
@@ -96,7 +106,10 @@ const resources = [
     group: "Operações",
     icon: "arrows",
     description: "Acompanhe as movimentações de produtos.",
-    fields: [["id_produto", "ID do produto", "number"], ["tipo", "Tipo", "text"], ["quantidade", "Quantidade", "number"], ["data_movimentacao", "Data da movimentação", "datetime-local"], ["observacao", "Observação", "textarea"]]
+    fields: [["id_produto", "Produto", "number"], ["tipo", "Tipo", "text"], ["quantidade", "Quantidade", "number"], ["data_movimentacao", "Data da movimentação", "datetime-local"], ["observacao", "Observação", "textarea"]],
+    references: {
+      id_produto: { path: "produtos", envelope: "produto", id: "id_produto", name: "nome", joined: "produto_nome" }
+    }
   },
   {
     path: "pedidos",
@@ -107,7 +120,10 @@ const resources = [
     group: "Operações",
     icon: "clipboard",
     description: "Visualize os pedidos e os clientes associados.",
-    fields: [["status", "Status", "text"], ["data_pedido", "Data do pedido", "datetime-local"], ["id_cliente", "ID do cliente", "number"]]
+    fields: [["status", "Status", "text"], ["data_pedido", "Data do pedido", "datetime-local"], ["id_cliente", "Cliente", "number"]],
+    references: {
+      id_cliente: { path: "clientes", envelope: "cliente", id: "id_cliente", name: "nome", joined: "cliente_nome" }
+    }
   },
   {
     path: "pedido_itens",
@@ -118,7 +134,11 @@ const resources = [
     group: "Operações",
     icon: "list",
     description: "Gerencie os produtos associados a cada pedido.",
-    fields: [["id_pedido", "ID do pedido", "number"], ["id_produto", "ID do produto", "number"], ["quantidade", "Quantidade", "number"], ["valor_unitario", "Valor unitário", "number"], ["subtotal", "Subtotal", "number"]]
+    fields: [["id_pedido", "Pedido", "number"], ["id_produto", "Produto", "number"], ["quantidade", "Quantidade", "number"], ["valor_unitario", "Valor unitário", "number"], ["subtotal", "Subtotal", "number"]],
+    references: {
+      id_pedido: { path: "pedidos", envelope: "pedido", id: "id_pedido", name: "id_pedido", joined: "pedido_referencia" },
+      id_produto: { path: "produtos", envelope: "produto", id: "id_produto", name: "nome", joined: "produto_nome" }
+    }
   },
   {
     path: "saidas",
@@ -129,7 +149,11 @@ const resources = [
     group: "Operações",
     icon: "arrow-up",
     description: "Registre produtos retirados do estoque.",
-    fields: [["id_produto", "ID do produto", "number"], ["id_funcionario", "ID do funcionário", "number"], ["quantidade", "Quantidade", "number"], ["valor_unitario", "Valor unitário", "number"], ["data_saida", "Data da saída", "datetime-local"], ["destino", "Destino", "text"]]
+    fields: [["id_produto", "Produto", "number"], ["id_funcionario", "Funcionário", "number"], ["quantidade", "Quantidade", "number"], ["valor_unitario", "Valor unitário", "number"], ["data_saida", "Data da saída", "datetime-local"], ["destino", "Destino", "text"]],
+    references: {
+      id_produto: { path: "produtos", envelope: "produto", id: "id_produto", name: "nome", joined: "produto_nome" },
+      id_funcionario: { path: "funcionarios", envelope: "funcionario", id: "id_funcionario", name: "nome", joined: "funcionario_nome" }
+    }
   },
   {
     path: "logs",
@@ -161,8 +185,9 @@ const icons = {
 };
 
 const state = {
-  apiBase: localStorage.getItem("loja-api-base") || "http://localhost:5000",
+  apiBase: localStorage.getItem("loja-api-base") || "https://backend-oz6f.onrender.com",
   resource: resources[0],
+  usuario: null,
   records: [],
   editingId: null,
   loading: false,
@@ -171,6 +196,14 @@ const state = {
 };
 
 const elements = {
+  loginScreen: document.querySelector("#login-screen"),
+  appShell: document.querySelector("#app-shell"),
+  loginForm: document.querySelector("#login-form"),
+  loginEmail: document.querySelector("#login-email"),
+  loginPassword: document.querySelector("#login-password"),
+  loginFeedback: document.querySelector("#login-feedback"),
+  loginButton: document.querySelector("#login-button"),
+  currentUser: document.querySelector("#current-user"),
   nav: document.querySelector("#resource-nav"),
   breadcrumb: document.querySelector("#breadcrumb-current"),
   eyebrow: document.querySelector("#page-eyebrow"),
@@ -249,11 +282,12 @@ function apiUrl(path) {
   return `${state.apiBase.replace(/\/+$/, "")}/${path}`;
 }
 
-async function request(path, options = {}) {
+async function request(path, options = {}, settings = {}) {
   let response;
   try {
     response = await fetch(apiUrl(path), {
       ...options,
+      credentials: "include",
       headers: {
         Accept: "application/json",
         ...(options.body ? { "Content-Type": "application/json" } : {}),
@@ -276,6 +310,9 @@ async function request(path, options = {}) {
 
   if (!response.ok) {
     const message = body?.mensagem || body?.erro?.mensagem || body?.error?.message;
+    if (response.status === 401 && !settings.skipAuthHandling) {
+      showLogin("Sua sessão expirou. Entre novamente para continuar.");
+    }
     throw new Error(message || `A API respondeu com o status ${response.status}.`);
   }
   return body;
@@ -316,7 +353,7 @@ function renderTable() {
   elements.recordCount.textContent = String(records.length);
   elements.caption.textContent = searchTerm
     ? `${records.length} de ${state.records.length} registros encontrados.`
-    : "Dados carregados diretamente da API.";
+    : "Dados e relacionamentos carregados da API.";
   elements.table.replaceChildren();
 
   if (state.loading) {
@@ -340,12 +377,19 @@ function renderTable() {
   const table = document.createElement("table");
   const head = document.createElement("thead");
   const headingRow = document.createElement("tr");
-  const fields = [state.resource.id, ...state.resource.fields.map(([key]) => key)];
+  const fields = [
+    { key: state.resource.id, label: "ID" },
+    ...state.resource.fields.map(([key, label]) => ({
+      key,
+      label,
+      displayKey: state.resource.references?.[key]?.joined || key
+    }))
+  ];
 
-  for (const key of fields) {
+  for (const field of fields) {
     const heading = document.createElement("th");
     heading.scope = "col";
-    heading.textContent = key === state.resource.id ? "ID" : labelForField(key);
+    heading.textContent = field.label;
     headingRow.append(heading);
   }
   const actionsHeading = document.createElement("th");
@@ -358,10 +402,11 @@ function renderTable() {
   const body = document.createElement("tbody");
   for (const record of records) {
     const row = document.createElement("tr");
-    for (const key of fields) {
+    for (const field of fields) {
       const cell = document.createElement("td");
-      cell.textContent = getDisplayValue(record[key]);
-      if (key === state.resource.fields[0][0]) cell.className = "cell-primary";
+      const value = record[field.displayKey];
+      cell.textContent = getDisplayValue(value ?? record[field.key]);
+      if (field.key === state.resource.fields[0][0]) cell.className = "cell-primary";
       row.append(cell);
     }
 
@@ -378,14 +423,6 @@ function renderTable() {
   }
   table.append(head, body);
   elements.table.append(table);
-}
-
-function labelForField(key) {
-  for (const resource of resources) {
-    const field = resource.fields.find(([name]) => name === key);
-    if (field) return field[1];
-  }
-  return key;
 }
 
 function createRowAction(label, action, callback) {
@@ -430,18 +467,38 @@ async function loadRecords() {
   }
 }
 
-function openRecordDialog(record = null) {
-  state.editingId = record ? record[state.resource.id] : null;
-  elements.recordDialogTitle.textContent = record ? `Editar ${state.resource.singular}` : `Criar ${state.resource.singular}`;
+async function openRecordDialog(record = null) {
+  const resource = state.resource;
+  const references = resource.references || {};
+  const optionsByField = new Map();
+  try {
+    await Promise.all(Object.entries(references).map(async ([key, reference]) => {
+      const body = await request(reference.path);
+      const options = body?.[reference.envelope];
+      if (!Array.isArray(options)) {
+        const label = resource.fields.find(([fieldKey]) => fieldKey === key)?.[1] || key;
+        throw new Error(`Não foi possível carregar as opções de ${label.toLocaleLowerCase("pt-BR")}.`);
+      }
+      optionsByField.set(key, options);
+    }));
+  } catch (error) {
+    showToast(error.message, "error");
+    return;
+  }
+
+  if (state.resource !== resource) return;
+
+  state.editingId = record ? record[resource.id] : null;
+  elements.recordDialogTitle.textContent = record ? `Editar ${resource.singular}` : `Criar ${resource.singular}`;
   elements.formEyebrow.textContent = record ? "EDIÇÃO" : "CADASTRO";
   elements.saveButton.disabled = false;
   elements.saveButton.textContent = "Salvar";
   elements.formFields.replaceChildren();
 
-  for (const [key, label, type] of state.resource.fields) {
+  for (const [key, label, type] of resource.fields) {
     const group = document.createElement("div");
     group.className = "field-group";
-    if (type === "textarea" || state.resource.fields.length === 1) group.classList.add("full-width");
+    if (type === "textarea" || resource.fields.length === 1) group.classList.add("full-width");
 
     const fieldLabel = document.createElement("label");
     fieldLabel.className = "field-label";
@@ -452,13 +509,29 @@ function openRecordDialog(record = null) {
     fieldKey.textContent = key;
     fieldLabel.append(fieldKey);
 
-    const input = document.createElement(type === "textarea" ? "textarea" : "input");
+    const reference = references[key];
+    const input = document.createElement(reference ? "select" : type === "textarea" ? "textarea" : "input");
     input.className = "field-input";
     input.id = `field-${key}`;
     input.name = key;
-    if (type !== "textarea") input.type = type;
+    if (reference) {
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = `Selecione ${label.toLocaleLowerCase("pt-BR")}`;
+      input.append(placeholder);
+      for (const optionRecord of optionsByField.get(key)) {
+        const option = document.createElement("option");
+        option.value = String(optionRecord[reference.id]);
+        const name = optionRecord[reference.name];
+        option.textContent = reference.name === "id_pedido"
+          ? `Pedido #${name}`
+          : `${getDisplayValue(name)} (#${optionRecord[reference.id]})`;
+        input.append(option);
+      }
+    } else if (type !== "textarea") input.type = type;
     if (type === "number") input.step = "any";
-    if (type === "datetime-local" && record?.[key]) input.value = toLocalDateTime(record[key]);
+    if (reference && record?.[key] !== null && record?.[key] !== undefined) input.value = String(record[key]);
+    else if (type === "datetime-local" && record?.[key]) input.value = toLocalDateTime(record[key]);
     else if (type !== "textarea" && record?.[key] !== null && record?.[key] !== undefined) input.value = String(record[key]);
     else if (type === "textarea" && record?.[key] !== null && record?.[key] !== undefined) input.value = String(record[key]);
     group.append(fieldLabel, input);
@@ -546,7 +619,69 @@ function saveSettings(event) {
   state.apiBase = parsedUrl.origin + parsedUrl.pathname.replace(/\/+$/, "");
   localStorage.setItem("loja-api-base", state.apiBase);
   elements.settingsDialog.close();
-  loadRecords();
+  verifySession();
+}
+
+function showLogin(message = "") {
+  state.usuario = null;
+  elements.appShell.hidden = true;
+  elements.loginScreen.hidden = false;
+  elements.loginFeedback.textContent = message;
+  elements.loginFeedback.hidden = !message;
+  elements.loginPassword.value = "";
+}
+
+function showApp(usuario) {
+  state.usuario = usuario;
+  elements.currentUser.textContent = usuario?.nome || usuario?.email || "";
+  elements.loginScreen.hidden = true;
+  elements.appShell.hidden = false;
+}
+
+async function verifySession() {
+  try {
+    const body = await request("usuario/me");
+    showApp(body.usuario);
+    loadRecords();
+  } catch (error) {
+    showLogin(error.message);
+  }
+}
+
+async function login(event) {
+  event.preventDefault();
+  if (!elements.loginForm.reportValidity()) return;
+
+  elements.loginButton.disabled = true;
+  elements.loginButton.textContent = "Entrando...";
+  elements.loginFeedback.hidden = true;
+  try {
+    const body = await request("usuario/login", {
+      method: "POST",
+      body: JSON.stringify({
+        email: elements.loginEmail.value.trim(),
+        senha: elements.loginPassword.value
+      })
+    }, { skipAuthHandling: true });
+    elements.loginPassword.value = "";
+    showApp(body.usuario);
+    loadRecords();
+  } catch (error) {
+    elements.loginFeedback.textContent = error.message;
+    elements.loginFeedback.hidden = false;
+  } finally {
+    elements.loginButton.disabled = false;
+    elements.loginButton.textContent = "Entrar";
+  }
+}
+
+async function logout() {
+  try {
+    await request("usuario/logout", { method: "POST" });
+    showLogin("Você saiu do sistema.");
+  } catch (error) {
+    showToast(error.message, "error");
+  }
 }
 
 for (const button of document.querySelectorAll("[data-close-dialog]")) {
@@ -556,9 +691,12 @@ for (const button of document.querySelectorAll("[data-close-dialog]")) {
 document.querySelector("#create-button").addEventListener("click", () => openRecordDialog());
 document.querySelector("#refresh-button").addEventListener("click", loadRecords);
 document.querySelector("#settings-button").addEventListener("click", openSettings);
+document.querySelector("#login-settings-button").addEventListener("click", openSettings);
+document.querySelector("#logout-button").addEventListener("click", logout);
 elements.search.addEventListener("input", renderTable);
 elements.recordForm.addEventListener("submit", saveRecord);
 elements.settingsForm.addEventListener("submit", saveSettings);
+elements.loginForm.addEventListener("submit", login);
 document.addEventListener("keydown", event => {
   if (event.key === "/" && !elements.recordDialog.open && !elements.settingsDialog.open &&
       !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
@@ -569,4 +707,4 @@ document.addEventListener("keydown", event => {
 
 renderNavigation();
 updateHeading();
-loadRecords();
+verifySession();

@@ -9,7 +9,32 @@
   <script src="./app.js" defer></script>
 </head>
 <body>
-  <div class="app-shell">
+  <main id="login-screen" class="login-screen" hidden>
+    <section class="login-card">
+      <a class="brand login-brand" href="#" aria-label="Gestão da loja">
+        <span class="brand-mark" aria-hidden="true">g.</span>
+        <span class="brand-copy"><strong>gestão</strong><small>PAINEL DA LOJA</small></span>
+      </a>
+      <p class="eyebrow login-eyebrow">ACESSO RESTRITO</p>
+      <h1>Boas-vindas</h1>
+      <p class="login-description">Entre com sua conta para acessar o painel da loja.</p>
+      <form id="login-form" class="login-form">
+        <label class="field-group">
+          <span class="field-label">E-mail</span>
+          <input id="login-email" class="field-input" type="email" name="email" autocomplete="username" required>
+        </label>
+        <label class="field-group">
+          <span class="field-label">Senha</span>
+          <input id="login-password" class="field-input" type="password" name="senha" autocomplete="current-password" required>
+        </label>
+        <p id="login-feedback" class="login-feedback" role="alert" hidden></p>
+        <button id="login-button" class="primary-button login-submit" type="submit">Entrar</button>
+      </form>
+      <button id="login-settings-button" class="login-settings" type="button">Configurar endereço da API</button>
+    </section>
+  </main>
+
+  <div id="app-shell" class="app-shell" hidden>
     <aside class="sidebar" aria-label="Navegação principal">
       <a class="brand" href="#" aria-label="Gestão da loja, início">
         <span class="brand-mark" aria-hidden="true">g.</span>
@@ -33,6 +58,8 @@
             <span class="status-dot" aria-hidden="true"></span>
             <span id="connection-label">Conectando à API</span>
           </span>
+          <span id="current-user" class="current-user"></span>
+          <button id="logout-button" class="secondary-button logout-button" type="button">Sair</button>
           <button id="settings-button" class="icon-button" type="button" aria-label="Configurar endereço da API" title="Configurações da API">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19.4 13.5 1.1.8-1.1 1.9-1.3-.5a7.9 7.9 0 0 1-1.4.8l-.2 1.4h-2.2l-.3-1.4a7.7 7.7 0 0 1-1.5-.1l-.8 1.2-1.9-1.1.5-1.3a7.9 7.9 0 0 1-.8-1.4l-1.4-.2v-2.2l1.4-.3a7.7 7.7 0 0 1 .1-1.5l-1.2-.8 1.1-1.9 1.3.5a7.9 7.9 0 0 1 1.4-.8l.2-1.4h2.2l.3 1.4a7.7 7.7 0 0 1 1.5.1l.8-1.2 1.9 1.1-.5 1.3a7.9 7.9 0 0 1 .8 1.4l1.4.2v2.2l-1.4.3a7.7 7.7 0 0 1-.1 1.5Z"/></svg>
           </button>
@@ -53,8 +80,8 @@
         </div>
 
         <div class="security-notice" role="note">
-          <span class="notice-icon" aria-hidden="true">!</span>
-          <p><strong>Atenção:</strong> a API não exige autenticação. Este painel não restringe acesso; publique-o somente em um ambiente confiável até que o backend implemente autorização.</p>
+          <span class="notice-icon" aria-hidden="true">i</span>
+          <p>Você está autenticado. Todas as contas ativas têm acesso às operações; o sistema ainda não diferencia permissões por perfil.</p>
         </div>
 
         <section class="data-card" aria-labelledby="page-title">
