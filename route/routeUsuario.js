@@ -2,8 +2,18 @@ const express = require('express');
 const router = express.Router();
 const mysql = require("../mysql").pool;
 const bcrypt = require('bcryptjs');
+const {
+    authenticate,
+    clearSessionCookie,
+    isAllowedOrigin,
+    setSessionCookie
+} = require("../middleware/authenticate");
 
 router.post('/login', (req, res) => {
+    if (!isAllowedOrigin(req.get("Origin"))) {
+        return res.status(403).send({ mensagem: "Origem não autorizada." });
+    }
+
     const { email, senha } = req.body || {};
 
     if (typeof email !== 'string' || !email.trim() || typeof senha !== 'string' || !senha) {
@@ -41,6 +51,9 @@ router.post('/login', (req, res) => {
                     return res.status(401).send({ mensagem: "Email ou senha inválidos." });
                 }
 
+                const sessionError = setSessionCookie(res, usuario);
+                if (sessionError) return sessionError;
+
                 delete usuario.senha;
                 res.status(200).send({
                     mensagem: "Login realizado com sucesso.",
@@ -51,12 +64,28 @@ router.post('/login', (req, res) => {
     });
 });
 
+router.post('/logout', (req, res) => {
+    if (!isAllowedOrigin(req.get("Origin"))) {
+        return res.status(403).send({ mensagem: "Origem não autorizada." });
+    }
+
+    clearSessionCookie(res);
+    res.status(200).send({ mensagem: "Logout realizado com sucesso." });
+});
+
+router.use(authenticate);
+
+router.get('/me', (req, res) => {
+    const { id_usu, nome, email } = req.usuario;
+    res.status(200).send({ usuario: { id_usu, nome, email } });
+});
+
 //LISTAR USUARIOS
 router.get('/', (req, res) => {
    
 mysql.getConnection((error, conn) => {
    if (error) return res.status(500).send({ error });
-      conn.query("SELECT * FROM usuarios", (error, resultado) => {
+      conn.query("SELECT id_usu, nome, email, contato, genero, ativo FROM usuarios", (error, resultado) => {
       conn.release();
    if (error) return res.status(500).send({ error });
       res.status(200).send({ usuario: resultado });
@@ -69,7 +98,7 @@ mysql.getConnection((error, conn) => {
 router.get('/:id', (req, res, next) => {
     mysql.getConnection((error, conn) => {
         if (error) return res.status(500).send({ error: error });
-        conn.query("SELECT * FROM usuarios WHERE id_usu = ?", [req.params.id], (error, resultado) => {
+        conn.query("SELECT id_usu, nome, email, contato, genero, ativo FROM usuarios WHERE id_usu = ?", [req.params.id], (error, resultado) => {
             conn.release();
             if (error) return res.status(500).send({ error: error });
             res.status(200).send({ usuario: resultado });
@@ -77,15 +106,26 @@ router.get('/:id', (req, res, next) => {
     });
 });
 
-router.post('/', (req, res, next) => {
+router.post('/', async (req, res) => {
+    if (typeof req.body.senha !== "string" || !req.body.senha) {
+        return res.status(400).send({ mensagem: "Informe uma senha válida." });
+    }
+
+    let senhaHash;
+    try {
+        senhaHash = await bcrypt.hash(req.body.senha, 12);
+    } catch (error) {
+        console.error("Erro ao proteger senha do usuário:", error);
+        return res.status(500).send({ mensagem: "Erro ao criar usuário." });
+    }
+
     mysql.getConnection((error, conn) => {
         if (error) return res.status(500).send({ error: error });
         conn.query(
     "INSERT INTO usuarios (nome, email, senha, contato, genero) VALUES (?, ?, ?, ?, ?)",
-    [req.body.nome, req.body.email, req.body.senha, req.body.contato, req.body.genero],
+    [req.body.nome, req.body.email, senhaHash, req.body.contato, req.body.genero],
     (error, resultado) => {
-                console.log(error)
-                conn.release();
+        conn.release();
                 if (error) return res.status(500).send({ error: error });
                 res.status(201).send({
                     mensagem: "Usuário criado com sucesso!",
@@ -97,12 +137,24 @@ router.post('/', (req, res, next) => {
 });
 
 
-router.patch('/:id', (req, res, next) => {
+router.patch('/:id', async (req, res) => {
+    if (typeof req.body.senha !== "string" || !req.body.senha) {
+        return res.status(400).send({ mensagem: "Informe uma senha válida." });
+    }
+
+    let senhaHash;
+    try {
+        senhaHash = await bcrypt.hash(req.body.senha, 12);
+    } catch (error) {
+        console.error("Erro ao proteger senha do usuário:", error);
+        return res.status(500).send({ mensagem: "Erro ao atualizar usuário." });
+    }
+
     mysql.getConnection((error, conn) => {
         if (error) return res.status(500).send({ error: error });
         conn.query(
             "UPDATE usuarios SET nome = ?, email = ?, senha = ? WHERE id_usu = ?",
-            [req.body.nome, req.body.email, req.body.senha, req.params.id],
+            [req.body.nome, req.body.email, senhaHash, req.params.id],
             (error, resultado) => {
                 conn.release();
                 if (error) return res.status(500).send({ error: error });

@@ -4,9 +4,12 @@ const morgan = require('morgan');
 const cors = require('cors');
 const app = express();
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const { authenticate, isAllowedOrigin } = require('./middleware/authenticate');
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 const routeUsuario= require('./route/routeUsuario');
 const routeClientes= require('./route/routeClientes');
@@ -25,7 +28,8 @@ const routeSaidas= require('./route/routeSaidas');
 
 //2. Controle de CORS (Headers & OPTIONS)
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => callback(null, isAllowedOrigin(origin)),
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
 }));
@@ -34,19 +38,19 @@ app.use(cors({
 
 
 app.use("/usuario",routeUsuario);
-app.use("/clientes",routeClientes);
-app.use("/categorias",routeCategorias);
-app.use("/fornecedores",routeFornecedores);
-app.use("/funcionarios",routeFuncionario);
-app.use("/produtos",routeProdutos);
-app.use("/entradas",routeEntradas);
-app.use("/estoque",routeEstoque);
-app.use("/historico_precos",routeHistoricoPrecos);
-app.use("/logs",routeLogs);
-app.use("/movimentacoes",routeMovimentacoes);
-app.use("/pedidos",routePedidos);
-app.use("/pedido_itens",routePedidoItens);
-app.use("/saidas",routeSaidas);
+app.use("/clientes",authenticate,routeClientes);
+app.use("/categorias",authenticate,routeCategorias);
+app.use("/fornecedores",authenticate,routeFornecedores);
+app.use("/funcionarios",authenticate,routeFuncionario);
+app.use("/produtos",authenticate,routeProdutos);
+app.use("/entradas",authenticate,routeEntradas);
+app.use("/estoque",authenticate,routeEstoque);
+app.use("/historico_precos",authenticate,routeHistoricoPrecos);
+app.use("/logs",authenticate,routeLogs);
+app.use("/movimentacoes",authenticate,routeMovimentacoes);
+app.use("/pedidos",authenticate,routePedidos);
+app.use("/pedido_itens",authenticate,routePedidoItens);
+app.use("/saidas",authenticate,routeSaidas);
 //4. Tratamento de Erros (Fallback & Handler)
 app.use((req,res,next)=>{
       const erro = new Error("Não encontrado!");
