@@ -17,6 +17,14 @@ const usuarioTeste = {
     contato: null,
     genero: null
 };
+const usuarioPublicoTeste = {
+    id_usu: usuarioTeste.id_usu,
+    nome: usuarioTeste.nome,
+    email: usuarioTeste.email,
+    contato: usuarioTeste.contato,
+    genero: usuarioTeste.genero,
+    ativo: 1
+};
 const queries = [];
 const mockedMysql = {
     pool: {
@@ -30,6 +38,10 @@ const mockedMysql = {
                     queries.push({ sql, params });
                     if (sql.includes("FROM usuarios WHERE email = ?")) {
                         queryCallback(null, params[0] === usuarioTeste.email ? [{ ...usuarioTeste }] : []);
+                    } else if (sql.includes("FROM usuarios WHERE id_usu = ?")) {
+                        queryCallback(null, Number(params[0]) === usuarioPublicoTeste.id_usu ? [{ ...usuarioPublicoTeste }] : []);
+                    } else if (sql.includes("FROM usuarios")) {
+                        queryCallback(null, [{ ...usuarioPublicoTeste }]);
                     } else if (sql.includes("FROM saidas s")) {
                         queryCallback(null, [{
                             id_saida: 3,
@@ -168,7 +180,9 @@ test("consultas e novos cadastros de usuário não expõem senha em texto puro",
         headers: { cookie: sessionCookie, origin: process.env.FRONTEND_ORIGIN }
     });
     assert.equal(listResponse.status, 200);
-    assert.equal(Object.hasOwn((await listResponse.json()).usuario[0] || {}, "senha"), false);
+    const listBody = await listResponse.json();
+    assert.deepEqual(listBody.usuario, [usuarioPublicoTeste]);
+    assert.equal(Object.hasOwn(listBody.usuario[0], "senha"), false);
     assert.doesNotMatch(queries.at(-1).sql, /SELECT \*|senha/i);
 
     const createResponse = await fetch(`${baseUrl}/usuario`, {
@@ -190,6 +204,18 @@ test("consultas e novos cadastros de usuário não expõem senha em texto puro",
     const insertion = queries.at(-1);
     assert.match(insertion.params[2], /^\$2[aby]\$/);
     assert.equal(await bcrypt.compare("nova-senha", insertion.params[2]), true);
+});
+
+test("GET /usuario/:id retorna o usuário correspondente sem expor senha", async () => {
+    const sessionCookie = await loginAndGetCookie();
+    const response = await fetch(`${baseUrl}/usuario/${usuarioPublicoTeste.id_usu}`, {
+        headers: { cookie: sessionCookie, origin: process.env.FRONTEND_ORIGIN }
+    });
+
+    assert.equal(response.status, 200);
+    assert.deepEqual((await response.json()).usuario, [usuarioPublicoTeste]);
+    assert.deepEqual(queries.at(-1).params, [String(usuarioPublicoTeste.id_usu)]);
+    assert.doesNotMatch(queries.at(-1).sql, /SELECT \*|senha/i);
 });
 
 test("logout remove o cookie da sessão", async () => {
